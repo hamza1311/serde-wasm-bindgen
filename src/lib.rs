@@ -36,3 +36,28 @@ pub fn from_value<T: serde::de::DeserializeOwned>(value: JsValue) -> Result<T> {
 pub fn to_value<T: serde::ser::Serialize>(value: &T) -> Result<JsValue> {
     value.serialize(&Serializer::new())
 }
+
+#[wasm_bindgen]
+extern "C" {
+    type JSON;
+
+    #[wasm_bindgen(static_method_of = JSON)]
+    fn parse(value: &JsValue) -> JsValue;
+
+    #[wasm_bindgen(static_method_of = JSON)]
+    fn stringify(value: &JsValue) -> String;
+}
+
+/// Converts string containing JSON into a Rust type.
+pub fn from_string<T: serde::de::DeserializeOwned>(value: &str) -> Result<T> {
+    let js_value = JsValue::from_str(value);
+    let js_value = JSON::parse(&js_value);
+
+    from_value(js_value)
+}
+
+/// Converts a Rust type into JSON string.
+pub fn to_string<T: serde::Serialize>(value: &T) -> Result<String> {
+    let js_value = to_value(&value)?;
+    Ok(JSON::stringify(&js_value))
+}
